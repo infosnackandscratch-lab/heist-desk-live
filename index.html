@@ -143,7 +143,7 @@ function render(D){last=D;const b=D.balance,eq=+b.equity_usd,start=+b.start_usd,
   $("eqlab").textContent="Equity · €"+start.toFixed(0)+" paper base";setEq(eq);
   const pill=$("pill");pill.style.background=diff>=0?"rgba(20,120,60,.85)":"rgba(60,0,8,.75)";pill.style.color=diff>=0?"#B7F7D0":"#FFB3B3";
   pill.innerHTML=tw("diff",diff,"money")+" · "+tw("diffp",diff/start*100,"pct");tweenAll(pill);
-  $("stats").textContent=`${D.closed_count} closed · ${D.win_rate_pct??0}% win · ${D.today?.entered??0} entered today`;
+  $("stats").textContent=`${D.closed_count} closed · ${D.win_rate_pct??0}% win · ${D.today?.entered??0} entered today · ${D.trade_rate?.last_1h??0} trades last 1h (${D.trade_rate?.per_hour_today??0}/h today, target ${D.trade_rate?.target_per_day??25}/day)`;
   $("mult").innerHTML=tw("mult",m,"x");tweenAll($("mult"));
   const r=$("real");r.style.color=+b.realized_usd>=0?"var(--green)":"var(--red)";r.textContent="realized "+money(+b.realized_usd);
   $("curvesub").textContent=`max drawdown €${(+D.drawdown?.max_usd||0).toFixed(2)} · exposure ${D.exposure?.pct_of_equity??0}%`;
