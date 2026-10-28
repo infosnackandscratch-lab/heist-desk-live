@@ -76,7 +76,7 @@ svg{display:block;width:100%}
  <div class="row sb" style="align-items:flex-end">
   <div>
    <div class="eqlab" id="eqlab">Equity</div>
-   <div class="eq" id="eq">$–</div>
+   <div class="eq" id="eq">€–</div>
    <div class="row" style="margin-top:10px"><span class="pill" id="pill"></span><span class="sub" id="stats"></span></div>
   </div>
   <div class="row" style="flex-direction:column;align-items:flex-end;gap:6px"><span class="mult" id="mult">–</span><span class="badge" id="real" style="background:rgba(0,0,0,.45)"></span></div>
@@ -99,16 +99,16 @@ svg{display:block;width:100%}
 </div>
 <script>
 "use strict";
-const CREW={tokyo:["Tokyo","#3B82F6","T"],berlin:["Berlin","#F59E0B","B"],palermo:["Palermo","#F43F5E","P"],denver:["Denver","#A855F7","D"],rio:["Rio","#22C55E","R"],stockholm:["Stockholm","#06B6D4","S"],professor:["Professor","#EAB308","Pr"],helsinki:["Helsinki","#EC4899","H"],moscow:["Moscow","#94A3B8","M"],lisbon:["Lisbon","#14B8A6","L"],nairobi:["Nairobi","#F97316","N"]};
+const CREW={tokyo:["Tokyo","#3B82F6","T"],berlin:["Berlin","#F59E0B","B"],palermo:["Palermo","#F43F5E","P"],denver:["Denver","#A855F7","D"],rio:["Rio","#22C55E","R"],stockholm:["Stockholm","#06B6D4","S"],professor:["Professor","#EAB308","Pr"],helsinki:["Helsinki","#EC4899","H"],moscow:["Moscow","#94A3B8","M"],lisbon:["Lisbon","#14B8A6","L"],nairobi:["Nairobi","#F97316","N"],bogota:["Bogota","#84CC16","Bo"]};
 const GOALS=[1.25,1.5,2,3,5];
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"'`]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;","`":"&#96;"}[c]));
 const crewOf=n=>{const c=CREW[n];return c?{label:c[0],color:c[1],letter:c[2]}:{label:n,color:"#94A3B8",letter:String(n).slice(0,1).toUpperCase()}};
-const money=v=>(v>=0?"+":"−")+"$"+Math.abs(v).toFixed(2);
+const money=v=>(v>=0?"+":"−")+"€"+Math.abs(v).toFixed(2);
 const pct=v=>(v>=0?"+":"−")+Math.abs(v).toFixed(1)+"%";
 // ---- number tweening: any element with data-tw="key" data-v="number" data-f="fmt" animates from its previous value
 const prev={},anims={};
-const FMT={money,pct,int:v=>Math.round(v).toLocaleString("en-US"),x:v=>v.toFixed(2)+"x",usd:v=>"$"+v.toFixed(2)};
+const FMT={money,pct,int:v=>Math.round(v).toLocaleString("en-US"),x:v=>v.toFixed(2)+"x",usd:v=>"€"+v.toFixed(2)};
 function tweenAll(root){root.querySelectorAll("[data-tw]").forEach(el=>{const k=el.dataset.tw,to=+el.dataset.v,f=FMT[el.dataset.f]||FMT.int;
   const from=k in prev?prev[k]:to;prev[k]=to;tween(el,k,from,to,f)})}
 function tween(el,k,from,to,f,dur=700){cancelAnimationFrame(anims[k]);if(from===to||!isFinite(from)){el.textContent=f(to);return}
@@ -118,7 +118,7 @@ const tw=(k,v,f)=>`<span class="num" data-tw="${esc(k)}" data-v="${+v}" data-f="
 let eqPrev=null;
 function setEq(v){const el=$("eq");const from=eqPrev??v;if(eqPrev!==null&&Math.abs(v-eqPrev)>=0.005){el.classList.remove("up","dn");void el.offsetWidth;el.classList.add(v>eqPrev?"up":"dn");setTimeout(()=>el.classList.remove("up","dn"),900)}
   eqPrev=v;cancelAnimationFrame(anims.eq);const t0=performance.now();
-  const draw=x=>{const [w,c]=Math.max(0,x).toFixed(2).split(".");el.innerHTML="$"+esc(w)+'<span class="c">.'+esc(c)+"</span>"};
+  const draw=x=>{const [w,c]=Math.max(0,x).toFixed(2).split(".");el.innerHTML="€"+esc(w)+'<span class="c">.'+esc(c)+"</span>"};
   const step=t=>{const p=Math.min(1,(t-t0)/800),e=1-Math.pow(1-p,3);draw(from+(v-from)*e);if(p<1)anims.eq=requestAnimationFrame(step)};anims.eq=requestAnimationFrame(step)}
 function curve(pts,start){const W=1000,H=260,P=10;if(!pts.length)return"";const v=pts.map(p=>p.balance);
   let lo=Math.min(start,...v),hi=Math.max(start,...v);const pad=(hi-lo)*.12||1;lo-=pad;hi+=pad;
@@ -129,24 +129,24 @@ function curve(pts,start){const W=1000,H=260,P=10;if(!pts.length)return"";const 
   <line x1="0" x2="${W}" y1="${y(start)}" y2="${y(start)}" stroke="rgba(255,255,255,.45)" stroke-dasharray="6 6" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
   <path d="${d} L${W} ${H} L0 ${H} Z" fill="url(#g)"/><path d="${d}" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" vector-effect="non-scaling-stroke"/></svg>
   <div style="position:relative;height:0"><span style="position:absolute;left:calc(${lx/W*100}% - 7px);top:${-220+ly/H*220-7}px;width:14px;height:14px;border-radius:999px;background:#fff;box-shadow:0 0 0 6px rgba(255,255,255,.2)"></span></div>
-  <div class="row sb mut" style="margin-top:4px"><span>${esc(String(pts[0].time).slice(11,16))}</span><span>dashed = $${start.toFixed(0)} start</span><span>now</span></div>`}
+  <div class="row sb mut" style="margin-top:4px"><span>${esc(String(pts[0].time).slice(11,16))}</span><span>dashed = €${start.toFixed(0)} start</span><span>now</span></div>`}
 function goal(m){const stops=[1,...GOALS];const pos=v=>{if(v<=1)return 0;for(let i=1;i<stops.length;i++)if(v<=stops[i])return((i-1)+(v-stops[i-1])/(stops[i]-stops[i-1]))/(stops.length-1);return 1};
   const next=GOALS.find(g=>g>m)??GOALS[GOALS.length-1];
-  return `<div class="row sb"><span style="font-weight:700;font-size:18px">Goal: ${next}x</span><span class="sub">${tw("gm",m,"x")} now${m<1?" · below the $50 start":""}</span></div>
+  return `<div class="row sb"><span style="font-weight:700;font-size:18px">Goal: ${next}x</span><span class="sub">${tw("gm",m,"x")} now${m<1?" · below the €${(+last?.balance?.start_usd||100).toFixed(0)} start":""}</span></div>
   <div class="goal"><div class="gl"></div>${stops.map((s,i)=>`<div class="gs ${m>=s?"hit":""}" style="left:${i/(stops.length-1)*100}%"><b></b><div class="mut" style="font-size:11px;margin-top:4px">${s===1?"start":s+"x"}</div></div>`).join("")}
   <div class="gcur" style="left:${Math.max(0,Math.min(1,pos(m)))*100}%"></div></div>`}
 let standView="trade",last=null;
 $("bt").onclick=()=>{standView="trade";$("bt").className="on";$("bs").className="";last&&render(last)};
 $("bs").onclick=()=>{standView="source";$("bs").className="on";$("bt").className="";last&&render(last)};
 function render(D){last=D;const b=D.balance,eq=+b.equity_usd,start=+b.start_usd,diff=eq-start,m=eq/start;
-  $("ticker").innerHTML=[...(D.ticker||[]),{symbol:"SOL",kind:"mkt",chg_pct:D.market?.sol_24h_pct??0,basis:"24h $"+(+D.market?.sol_usd||0).toFixed(2)}].map(t=>`<span class="tk"><span class="tkc" style="background:${t.kind==="held"?"#F59E0B":"rgba(255,255,255,.22)"}">${esc(String(t.symbol).slice(0,1))}</span><b>${esc(t.symbol)}</b><span class="${t.chg_pct>=0?"pos":"neg"} num">${esc(pct(+t.chg_pct||0))}</span><span class="mut">${esc(t.kind==="held"?"held":t.kind==="mkt"?"market":"watch")} · ${esc(t.basis)}</span></span>`).join("");
-  $("eqlab").textContent="Equity · started with $"+start.toFixed(0);setEq(eq);
+  $("ticker").innerHTML=[...(D.ticker||[]),{symbol:"SOL",kind:"mkt",chg_pct:D.market?.sol_24h_pct??0,basis:"24h €"+(+D.market?.sol_usd||0).toFixed(2)}].map(t=>`<span class="tk"><span class="tkc" style="background:${t.kind==="held"?"#F59E0B":"rgba(255,255,255,.22)"}">${esc(String(t.symbol).slice(0,1))}</span><b>${esc(t.symbol)}</b><span class="${t.chg_pct>=0?"pos":"neg"} num">${esc(pct(+t.chg_pct||0))}</span><span class="mut">${esc(t.kind==="held"?"held":t.kind==="mkt"?"market":"watch")} · ${esc(t.basis)}</span></span>`).join("");
+  $("eqlab").textContent="Equity · €"+start.toFixed(0)+" paper base";setEq(eq);
   const pill=$("pill");pill.style.background=diff>=0?"rgba(20,120,60,.85)":"rgba(60,0,8,.75)";pill.style.color=diff>=0?"#B7F7D0":"#FFB3B3";
   pill.innerHTML=tw("diff",diff,"money")+" · "+tw("diffp",diff/start*100,"pct");tweenAll(pill);
   $("stats").textContent=`${D.closed_count} closed · ${D.win_rate_pct??0}% win · ${D.today?.entered??0} entered today`;
   $("mult").innerHTML=tw("mult",m,"x");tweenAll($("mult"));
   const r=$("real");r.style.color=+b.realized_usd>=0?"var(--green)":"var(--red)";r.textContent="realized "+money(+b.realized_usd);
-  $("curvesub").textContent=`max drawdown $${(+D.drawdown?.max_usd||0).toFixed(2)} · exposure ${D.exposure?.pct_of_equity??0}%`;
+  $("curvesub").textContent=`max drawdown €${(+D.drawdown?.max_usd||0).toFixed(2)} · exposure ${D.exposure?.pct_of_equity??0}%`;
   $("curve").innerHTML=curve(D.equity_curve||[],start);
   $("goal").innerHTML=goal(m);tweenAll($("goal"));
   const fun=D.crew_funnel||[];$("funsub").textContent=`${(+D.today?.scanned||0).toLocaleString("en-US")} scanned · ${D.today?.entered??0} entered`;
@@ -157,7 +157,7 @@ function render(D){last=D;const b=D.balance,eq=+b.equity_usd,start=+b.start_usd,
   const op=D.open_positions||[];$("opsub").textContent=op.length?`marks: ${D.live?.marks==="live"?"live every "+D.live.mark_every_s+" s":"Helsinki ~75 s"}`:"flat";
   $("open").innerHTML=op.length?op.map(p=>`<div class="fr"><span class="av" style="background:#F59E0B">${esc(String(p.symbol).slice(0,1))}</span><div class="grow"><div style="font-weight:700">${esc(p.symbol)}</div>
    <div class="mut ell">${esc(p.signal_source)} · ${esc(p.age_min)} min · mark ${esc(p.mark_age_s)} s old (${esc(p.mark_source)})</div></div>
-   <div style="text-align:right"><div class="${p.pnl_pct>=0?"pos":"neg"}" style="font-weight:700">${tw("op_"+p.mint,p.pnl_pct,"pct")}</div><div class="mut">${tw("ov_"+p.mint,p.value_usd,"usd")} / $${(+p.cost_left_usd).toFixed(2)}</div></div></div>`).join(""):`<div class="mut">No open positions right now.</div>`;tweenAll($("open"));
+   <div style="text-align:right"><div class="${p.pnl_pct>=0?"pos":"neg"}" style="font-weight:700">${tw("op_"+p.mint,p.pnl_pct,"pct")}</div><div class="mut">${tw("ov_"+p.mint,p.value_usd,"usd")} / €${(+p.cost_left_usd).toFixed(2)}</div></div></div>`).join(""):`<div class="mut">No open positions right now.</div>`;tweenAll($("open"));
   $("events").innerHTML=(D.events||[]).slice(0,10).map(e=>{const c=crewOf(e.who);return `<div class="fr"><span class="av" style="background:${c.color};width:28px;height:28px;font-size:12px;border-radius:9px">${esc(c.letter)}</span><div class="grow ell"><b>${esc(e.symbol)}</b> <span class="sub">${esc(e.text)}</span></div><span class="mut num">${esc(e.at)}</span></div>`}).join("")||'<div class="mut">Quiet.</div>';
   const rej=D.rejections_top8||[],rm=Math.max(1,...rej.map(x=>x.count));
   $("rej").innerHTML=rej.map((x,i)=>`<div style="padding:6px 0"><div class="row sb"><span class="ell" style="max-width:78%">${esc(x.label)} <span class="mut">${esc(crewOf(x.reason.split(":")[0]).label)}</span></span>${tw("r"+i,x.count,"int")}</div><div class="bar"><i style="width:${x.count/rm*100}%"></i></div></div>`).join("");tweenAll($("rej"));
