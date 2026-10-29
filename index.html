@@ -66,11 +66,36 @@ h2{font-size:22px;font-weight:700;margin:0}
 .tabs button.on{background:rgba(255,255,255,.9);color:#7A0A12}
 svg{display:block;width:100%}
 .foot{color:var(--ink3);font-size:12px;text-align:center;line-height:1.5}
+/* 1640: subtle tech + interactivity (still red) */
+.num,.mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-variant-numeric:tabular-nums}
+.eq{font-family:inherit}
+.fr{transition:background .15s;border-radius:10px}
+.fr:hover{background:rgba(255,255,255,.06)}
+.clk{cursor:pointer}.clk:hover{background:rgba(255,255,255,.1)}
+.fl{animation:fl .9s ease-out}
+@keyframes fl{0%{background:rgba(255,255,255,.28);border-radius:4px}100%{background:transparent}}
+.card{transition:border-color .2s}.card:hover{border-color:rgba(255,255,255,.22)}
+.card>.head h2{cursor:pointer;user-select:none}
+.card>.head h2::before{content:"\25BE";display:inline-block;font-size:.6em;margin-right:8px;opacity:.5;transition:transform .2s;vertical-align:middle}
+.card.col>.head h2::before{transform:rotate(-90deg)}
+.card.col>.head{margin-bottom:0}.card.col>.head~*{display:none}
+.hb{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--ink3);letter-spacing:.3px}
+.spark{width:150px;height:34px;opacity:.9}
+.rt{width:100%;border-collapse:collapse;font-size:13px}
+.rt th{text-align:left;color:var(--ink3);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.6px;padding:6px 6px;border-bottom:1px solid var(--line);cursor:pointer;user-select:none;white-space:nowrap}
+.rt th.s::after{content:" \25BE"}.rt th.s.asc::after{content:" \25B4"}
+.rt td{padding:7px 6px;border-top:1px solid var(--line);vertical-align:middle}
+.rt tbody tr{cursor:pointer;transition:background .15s}.rt tbody tr:hover{background:rgba(255,255,255,.08)}
+.rt tr:first-child td{border-top:0}
+.rwrap{max-height:420px;overflow:auto}
+.fin{background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:999px;color:#fff;font:inherit;font-size:13px;padding:4px 12px;outline:none;width:150px}
+.fin:focus{border-color:rgba(255,255,255,.4)}
+.lane{font-size:11px;padding:2px 8px}
 </style></head>
 <body><div class="wrap">
  <div class="row sb">
   <div class="row"><span class="logo">HD</span><span class="title">Heist Desk</span></div>
-  <div class="row"><span class="live"><span id="ld" class="ldot"></span><span id="lt">connecting…</span></span><span class="paper"><span class="dot"></span>PAPER</span></div>
+  <div class="row"><span class="live"><span id="ld" class="ldot"></span><span id="lt">connecting…</span></span><span class="hb" id="hb" title="updates received / last gap"></span><span class="paper"><span class="dot"></span>PAPER</span></div>
  </div>
  <div class="ticker"><div class="in" id="ticker"></div></div>
  <div class="row sb" style="align-items:flex-end">
@@ -79,7 +104,7 @@ svg{display:block;width:100%}
    <div class="eq" id="eq">€–</div>
    <div class="row" style="margin-top:10px"><span class="pill" id="pill"></span><span class="sub" id="stats"></span></div>
   </div>
-  <div class="row" style="flex-direction:column;align-items:flex-end;gap:6px"><span class="mult" id="mult">–</span><span class="badge" id="real" style="background:rgba(0,0,0,.45)"></span></div>
+  <div class="row" style="flex-direction:column;align-items:flex-end;gap:6px"><svg class="spark" id="spark" viewBox="0 0 150 34" preserveAspectRatio="none"></svg><span class="mult" id="mult">–</span><span class="badge" id="real" style="background:rgba(0,0,0,.45)"></span></div>
  </div>
  <div class="card"><div class="head"><h2>Equity curve</h2><span class="sub" id="curvesub"></span></div><div id="curve"></div></div>
  <div class="card" id="goal"></div>
@@ -87,6 +112,9 @@ svg{display:block;width:100%}
   <div class="card"><div class="head"><h2>Funnel</h2><span class="sub" id="funsub"></span></div><div id="funnel"></div></div>
   <div class="card"><div class="head"><h2>Open positions</h2><span class="sub" id="opsub"></span></div><div id="open"></div></div>
  </div>
+ <div class="card" id="rioroom"><div class="head"><h2>Rio waiting room</h2><span class="row"><span class="badge info" id="riocnt">–</span><span class="tabs" id="riolane"><button data-l="" class="on">All</button><button data-l="main">Main</button><button data-l="fresh">Fresh</button><button data-l="second">2nd leg</button></span><input class="fin" id="riof" placeholder="filter coin / reason" autocomplete="off"></span></div>
+  <div class="mut" style="margin:-6px 0 8px">Coins Rio (entry timing) is holding back — latest verdict WATCH in the last 6 h. Click a row to open DexScreener.</div>
+  <div class="rwrap"><table class="rt"><thead><tr><th data-k="symbol">Coin</th><th data-k="lane">Lane</th><th data-k="reason_text">Why Rio waits</th><th data-k="waiting_min" class="s">Waiting</th><th data-k="checks">Checks</th><th data-k="last_check_min">Last</th></tr></thead><tbody id="riotb"></tbody></table></div></div>
  <div class="grid">
   <div class="card"><div class="head"><h2>Desk log</h2><span class="sub">latest first</span></div><div id="events"></div></div>
   <div class="card"><div class="head"><h2>Why tokens got skipped</h2><span class="sub">today</span></div><div id="rej"></div></div>
@@ -112,6 +140,7 @@ const FMT={money,pct,int:v=>Math.round(v).toLocaleString("en-US"),x:v=>v.toFixed
 function tweenAll(root){root.querySelectorAll("[data-tw]").forEach(el=>{const k=el.dataset.tw,to=+el.dataset.v,f=FMT[el.dataset.f]||FMT.int;
   const from=k in prev?prev[k]:to;prev[k]=to;tween(el,k,from,to,f)})}
 function tween(el,k,from,to,f,dur=700){cancelAnimationFrame(anims[k]);if(from===to||!isFinite(from)){el.textContent=f(to);return}
+  el.classList.add("fl");
   const t0=performance.now();const step=t=>{const p=Math.min(1,(t-t0)/dur),e=1-Math.pow(1-p,3);el.textContent=f(from+(to-from)*e);if(p<1)anims[k]=requestAnimationFrame(step)};anims[k]=requestAnimationFrame(step)}
 const tw=(k,v,f)=>`<span class="num" data-tw="${esc(k)}" data-v="${+v}" data-f="${f}">${esc(FMT[f](+v))}</span>`;
 // ---- equity hero (custom tween for big dollars + small cents)
@@ -150,12 +179,12 @@ function render(D){last=D;const b=D.balance,eq=+b.equity_usd,start=+b.start_usd,
   $("curve").innerHTML=curve(D.equity_curve||[],start);
   $("goal").innerHTML=goal(m);tweenAll($("goal"));
   const fun=D.crew_funnel||[];$("funsub").textContent=`${(+D.today?.scanned||0).toLocaleString("en-US")} scanned · ${D.today?.entered??0} entered`;
-  $("funnel").innerHTML=fun.map(f=>{const c=crewOf(f.name),l=f.latest;return `<div class="fr"><span class="av" style="background:${c.color}">${esc(c.letter)}</span>
+  $("funnel").innerHTML=fun.map(f=>{const c=crewOf(f.name),l=f.latest;return `<div class="fr${f.name==="rio"?" clk":""}"${f.name==="rio"?' data-jump="rioroom" title="see Rio waiting room"':""}><span class="av" style="background:${c.color}">${esc(c.letter)}</span>
    <div class="grow"><div style="font-weight:700">${esc(c.label)} <span class="mut" style="font-weight:400">${esc(f.role)}</span></div>
    <div class="mut ell">${l?`${esc(l.symbol)} · ${esc(l.verdict)} · ${esc(l.reason)} · ${esc(l.at)}`:esc(f.info||"")}</div></div>
    <span class="badge ${f.kind==="good"?"good":f.kind==="bad"?"bad":"info"}">${f.count==null?esc(f.count_label):tw("f_"+f.name,f.count,"int")+" "+esc(f.count_label)}</span></div>`}).join("");tweenAll($("funnel"));
   const op=D.open_positions||[];$("opsub").textContent=op.length?`marks: ${D.live?.marks==="live"?"live every "+D.live.mark_every_s+" s":"Helsinki ~75 s"}`:"flat";
-  $("open").innerHTML=op.length?op.map(p=>`<div class="fr"><span class="av" style="background:#F59E0B">${esc(String(p.symbol).slice(0,1))}</span><div class="grow"><div style="font-weight:700">${esc(p.symbol)}</div>
+  $("open").innerHTML=op.length?op.map(p=>`<div class="fr clk" data-url="https://dexscreener.com/solana/${esc(p.mint)}" title="open on DexScreener"><span class="av" style="background:#F59E0B">${esc(String(p.symbol).slice(0,1))}</span><div class="grow"><div style="font-weight:700">${esc(p.symbol)}</div>
    <div class="mut ell">${esc(p.signal_source)} · ${esc(p.age_min)} min · mark ${esc(p.mark_age_s)} s old (${esc(p.mark_source)})</div></div>
    <div style="text-align:right"><div class="${p.pnl_pct>=0?"pos":"neg"}" style="font-weight:700">${tw("op_"+p.mint,p.pnl_pct,"pct")}</div><div class="mut">${tw("ov_"+p.mint,p.value_usd,"usd")} / €${(+p.cost_left_usd).toFixed(2)}</div></div></div>`).join(""):`<div class="mut">No open positions right now.</div>`;tweenAll($("open"));
   $("events").innerHTML=(D.events||[]).slice(0,10).map(e=>{const c=crewOf(e.who);return `<div class="fr"><span class="av" style="background:${c.color};width:28px;height:28px;font-size:12px;border-radius:9px">${esc(c.letter)}</span><div class="grow ell"><b>${esc(e.symbol)}</b> <span class="sub">${esc(e.text)}</span></div><span class="mut num">${esc(e.at)}</span></div>`}).join("")||'<div class="mut">Quiet.</div>';
@@ -172,8 +201,35 @@ function render(D){last=D;const b=D.balance,eq=+b.equity_usd,start=+b.start_usd,
   A.labels.forEach((lab,i)=>{let y=H;names.forEach(n=>{const v=A.series[n][i]||0,h=v/tm*(H-24);if(h>0){y-=h;svg+=`<rect x="${i*bw+bw*.15}" y="${y}" width="${bw*.7}" height="${h}" fill="${crewOf(n).color}" rx="3"/>`}});
    svg+=`<text x="${i*bw+bw/2}" y="${y-5}" text-anchor="middle" font-size="22" fill="rgba(255,255,255,.72)">${tot[i]}</text><text x="${i*bw+bw/2}" y="${H+18}" text-anchor="middle" font-size="22" fill="rgba(255,255,255,.5)">${esc(lab)}</text>`});
   $("act").innerHTML=svg+"</svg>"+`<div class="row" style="margin-top:6px">${names.map(n=>`<span class="mut row" style="gap:4px"><span style="width:10px;height:10px;border-radius:3px;background:${crewOf(n).color}"></span>${esc(crewOf(n).label)}</span>`).join("")}</div>`;
+  rioRender(D);spark(D.equity_curve||[],start);
   const ok=(D.crew||[]).filter(c=>c.status==="ok").length;
   $("foot").innerHTML=`${ok}/${(D.crew||[]).length} crew healthy · regime ${esc(D.market?.regime)} · live mode ${D.live_mode?"ON?!":"OFF"}<br>Paper trading only · no real money · a few days of paper data prove nothing about profitability.`}
+// ---- 1640: Rio waiting room (sortable / filterable), sparkline, collapsible cards, clickable rows, heartbeat
+let rioSort={k:"waiting_min",asc:false},rioLane="",rioQ="",rioLast=[];
+const fmtMin=m=>m<1?Math.round(m*60)+"s":m<60?m.toFixed(0)+"m":(m/60).toFixed(1)+"h";
+const LANEC={main:"info",fresh:"good",second:"neu"};
+function rioRender(D){if(D)rioLast=D.rio_waiting_list||[];const n=D?(D.rio_waiting??D.rio_waiting_total??rioLast.length):null;
+  if(n!=null){const c=$("riocnt");c.innerHTML=tw("rioN",n,"int")+" waiting";tweenAll(c)}
+  const q=rioQ.toLowerCase(),k=rioSort.k,dir=rioSort.asc?1:-1;
+  const rows=rioLast.filter(x=>(!rioLane||x.lane===rioLane)&&(!q||(x.symbol+" "+x.mint+" "+x.reason_text+" "+x.reason).toLowerCase().includes(q)))
+   .sort((a,b)=>{const x=a[k],y=b[k];return(typeof x==="number"?x-y:String(x).localeCompare(String(y)))*dir});
+  $("riotb").innerHTML=rows.map(x=>`<tr data-url="${esc(x.url)}" title="open ${esc(x.symbol)} on DexScreener"><td><b>${esc(x.symbol)}</b> <span class="mut mono">${esc(x.mint_short)}</span></td><td><span class="badge lane ${LANEC[x.lane]||"neu"}">${esc(x.lane==="second"?"2nd leg":x.lane)}</span></td><td class="sub">${esc(x.reason_text)}</td><td class="num">${esc(fmtMin(+x.waiting_min))}</td><td class="num">${esc(x.checks)}</td><td class="num mut">${esc(fmtMin(+x.last_check_min))} ago</td></tr>`).join("")
+   ||`<tr><td colspan="6" class="mut" style="cursor:default">${rioLast.length?"No coin matches the filter.":"Rio isn't holding any coin right now."}</td></tr>`;
+  document.querySelectorAll("#rioroom th").forEach(th=>{th.classList.toggle("s",th.dataset.k===k);th.classList.toggle("asc",th.dataset.k===k&&rioSort.asc)})}
+document.querySelectorAll("#rioroom th").forEach(th=>th.onclick=()=>{const k=th.dataset.k;rioSort=rioSort.k===k?{k,asc:!rioSort.asc}:{k,asc:k==="symbol"||k==="lane"||k==="reason_text"};rioRender()});
+$("riof").oninput=e=>{rioQ=e.target.value;rioRender()};
+document.querySelectorAll("#riolane button").forEach(b=>b.onclick=()=>{rioLane=b.dataset.l;document.querySelectorAll("#riolane button").forEach(x=>x.className=x===b?"on":"");rioRender()});
+function spark(pts,start){const v=pts.slice(-60).map(p=>+p.balance);const el=$("spark");if(v.length<2){el.innerHTML="";return}
+  const lo=Math.min(start,...v),hi=Math.max(start,...v),r=hi-lo||1,x=i=>i/(v.length-1)*150,y=b=>31-(b-lo)/r*28;
+  const d=v.map((b,i)=>(i?"L":"M")+x(i).toFixed(1)+" "+y(b).toFixed(1)).join(" "),up=v[v.length-1]>=start;
+  el.innerHTML=`<line x1="0" x2="150" y1="${y(start)}" y2="${y(start)}" stroke="rgba(255,255,255,.3)" stroke-dasharray="3 3" vector-effect="non-scaling-stroke"/><path d="${d}" fill="none" stroke="${up?"#B7F7D0":"#FFB3B3"}" stroke-width="1.6" vector-effect="non-scaling-stroke"/><circle cx="150" cy="${y(v[v.length-1])}" r="2.5" fill="#fff"/>`}
+document.addEventListener("click",e=>{if(e.target.closest("input,button,a"))return;const h=e.target.closest(".card>.head h2");
+  if(h){const c=h.closest(".card"),id=c.id||h.textContent.trim();c.classList.toggle("col");try{const s=JSON.parse(localStorage.hdCol||"{}");s[id]=c.classList.contains("col");localStorage.hdCol=JSON.stringify(s)}catch(_){}return}
+  const j=e.target.closest("[data-jump]");if(j){const t=$(j.dataset.jump);t.classList.remove("col");t.scrollIntoView({behavior:"smooth",block:"start"});return}
+  const u=e.target.closest("[data-url]");if(u&&/^https:\/\/dexscreener\.com\//.test(u.dataset.url))window.open(u.dataset.url,"_blank","noopener,noreferrer")});
+try{const s=JSON.parse(localStorage.hdCol||"{}");document.querySelectorAll(".card").forEach(c=>{const h=c.querySelector(".head h2");if(h&&s[c.id||h.textContent.trim()])c.classList.add("col")})}catch(_){}
+let hbN=0,hbT=0;const hbTick=()=>{const n=Date.now(),g=hbT?((n-hbT)/1000).toFixed(1):"–";hbT=n;hbN++;const h=$("hb");if(h)h.textContent=`#${hbN} · Δ${g}s`};
+new MutationObserver(()=>{if($("ld").classList.contains("on"))hbTick()}).observe($("ld"),{attributes:true,attributeFilter:["class"]});
 // ---- Firebase RTDB stream (EventSource), polling fallback. Token comes from the URL #fragment only.
 const DB="https://heist-desk-live-default-rtdb.europe-west1.firebasedatabase.app",TOK=(location.hash.slice(1).match(/^[0-9a-f]{32}$/)||[""])[0];let S={},lastOk=0,es=null,pollT=null,dirty=false;
 function setAt(path,val){const p=path.split("/").filter(Boolean);if(p[0]!=="k"){if(!p.length&&val&&typeof val==="object")S=Object.assign({},val.k||{});else if(!p.length)S={};return}
