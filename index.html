@@ -177,7 +177,7 @@ function curve(pts,start){const W=1000,H=260,P=10;if(!pts.length)return"";const 
   <div class="row sb mut" style="margin-top:4px"><span>${esc(String(pts[0].time).slice(11,16))}</span><span>dashed = €${start.toFixed(0)} start</span><span>now</span></div>`}
 function goal(m){const stops=[1,...GOALS];const pos=v=>{if(v<=1)return 0;for(let i=1;i<stops.length;i++)if(v<=stops[i])return((i-1)+(v-stops[i-1])/(stops[i]-stops[i-1]))/(stops.length-1);return 1};
   const next=GOALS.find(g=>g>m)??GOALS[GOALS.length-1];
-  return `<div class="row sb"><span style="font-weight:700;font-size:18px">Goal: ${next}x</span><span class="sub">${tw("gm",m,"x")} now${m<1?" · below the €${(+last?.balance?.start_usd||100).toFixed(0)} start":""}</span></div>
+  return `<div class="row sb"><span style="font-weight:700;font-size:18px">Goal: ${next}x</span><span class="sub">${tw("gm",m,"x")} now${m<1?` · below the €${(+last?.balance?.start_usd||100).toFixed(0)} start`:""}</span></div>
   <div class="goal"><div class="gl"></div>${stops.map((s,i)=>`<div class="gs ${m>=s?"hit":""}" style="left:${i/(stops.length-1)*100}%"><b></b><div class="mut" style="font-size:11px;margin-top:4px">${s===1?"start":s+"x"}</div></div>`).join("")}
   <div class="gcur" style="left:${Math.max(0,Math.min(1,pos(m)))*100}%"></div></div>`}
 
