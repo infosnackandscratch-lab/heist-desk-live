@@ -88,6 +88,7 @@ svg{display:block;width:100%}
 .rt tbody tr{cursor:pointer;transition:background .15s}.rt tbody tr:hover{background:rgba(255,255,255,.08)}
 .rt tr:first-child td{border-top:0}
 .rwrap{max-height:420px;overflow:auto}
+.fin.tdsel{width:auto;cursor:pointer;-webkit-appearance:none;appearance:none;padding-right:26px;background-image:linear-gradient(45deg,transparent 50%,#fff 50%),linear-gradient(135deg,#fff 50%,transparent 50%);background-position:calc(100% - 14px) 52%,calc(100% - 9px) 52%;background-size:5px 5px;background-repeat:no-repeat}.tdsel option{color:#000}
 .fin{background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:999px;color:#fff;font:inherit;font-size:13px;padding:4px 12px;outline:none;width:150px}
 .fin:focus{border-color:rgba(255,255,255,.4)}
 .lane{font-size:11px;padding:2px 8px}
@@ -119,8 +120,10 @@ svg{display:block;width:100%}
   <div class="card"><div class="head"><h2>Desk log</h2><span class="sub">latest first</span></div><div id="events"></div></div>
   <div class="card"><div class="head"><h2>Why tokens got skipped</h2><span class="sub">today</span></div><div id="rej"></div></div>
  </div>
+ <div class="card" id="tradesday"><div class="head"><h2>Trades taken</h2><span class="row"><span class="badge neu" id="tdtot">–</span><select class="fin tdsel" id="tdday" aria-label="choose day"><option value="">Today</option></select></span></div>
+  <div class="mut" id="tdsub" style="margin:-6px 0 8px">Positions opened on the chosen day (Europe/Amsterdam). Click a row to open DexScreener.</div>
+  <div class="rwrap"><table class="rt"><thead><tr><th>Time</th><th>Coin</th><th>Lane</th><th>Entry</th><th>Exit</th><th>P&amp;L</th><th>Status</th></tr></thead><tbody id="tdtb"></tbody></table></div></div>
  <div class="grid">
-  <div class="card"><div class="head"><h2>Standings</h2><span class="tabs"><button id="bt" class="on">Trades</button><button id="bs">Sources</button></span></div><div id="stand"></div></div>
   <div class="card"><div class="head"><h2>Activity</h2><span class="sub" id="actsub"></span></div><div id="act"></div></div>
  </div>
  <div class="foot" id="foot">Paper trading only · no real money · a few days of paper data prove nothing about profitability.</div>
@@ -164,9 +167,29 @@ function goal(m){const stops=[1,...GOALS];const pos=v=>{if(v<=1)return 0;for(let
   return `<div class="row sb"><span style="font-weight:700;font-size:18px">Goal: ${next}x</span><span class="sub">${tw("gm",m,"x")} now${m<1?" · below the €${(+last?.balance?.start_usd||100).toFixed(0)} start":""}</span></div>
   <div class="goal"><div class="gl"></div>${stops.map((s,i)=>`<div class="gs ${m>=s?"hit":""}" style="left:${i/(stops.length-1)*100}%"><b></b><div class="mut" style="font-size:11px;margin-top:4px">${s===1?"start":s+"x"}</div></div>`).join("")}
   <div class="gcur" style="left:${Math.max(0,Math.min(1,pos(m)))*100}%"></div></div>`}
-let standView="trade",last=null;
-$("bt").onclick=()=>{standView="trade";$("bt").className="on";$("bs").className="";last&&render(last)};
-$("bs").onclick=()=>{standView="source";$("bs").className="on";$("bt").className="";last&&render(last)};
+let last=null;
+// ---- 2026-11-02: Trades taken per day (D.trades_days from live_push: by_day{YYYY-MM-DD:[rows]}, last 30 days; default today)
+let tdSel="",tdSig="";
+const pxf=v=>v==null?"":"$"+(+v<0.01?(+v).toPrecision(4):(+v).toFixed(4));
+const dayLab=(iso,today)=>{const d=new Date(iso+"T12:00:00Z");const w=d.toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short",timeZone:"UTC"});return iso===today?"Today · "+w:w};
+function tdDays(today,n){const out=[],d=new Date(today+"T12:00:00Z");for(let i=0;i<n;i++){out.push(new Date(d.getTime()-i*864e5).toISOString().slice(0,10))}return out}
+function tdRender(D){const T=D.trades_days||{},today=T.today||"",by=T.by_day||{},n=+T.days||30;
+  const sel=$("tdday");if(!today){$("tdtb").innerHTML='<tr><td colspan="7" class="mut" style="cursor:default">Waiting for trade history…</td></tr>';return}
+  const days=tdDays(today,n),sig=today+"|"+days.map(d=>(by[d]||[]).length).join(",");
+  if(tdSel&&!days.includes(tdSel))tdSel="";
+  if(sig!==tdSig){tdSig=sig;sel.innerHTML=days.map((d,i)=>`<option value="${i?d:""}">${esc(dayLab(d,today))} · ${(by[d]||[]).length} trade${(by[d]||[]).length===1?"":"s"}</option>`).join("");sel.value=tdSel}
+  const day=tdSel||today,op={};(D.open_positions||[]).forEach(p=>op[p.mint]=p);
+  const rows=(by[day]||[]).map(r=>{const x=Object.assign({},r),p=op[r.mint];
+    if(r.status==="open"&&p){x.pnl_eur=+r.pnl_eur+(+p.value_usd-+p.cost_left_usd);x.pnl_pct=r.cost_eur?x.pnl_eur/+r.cost_eur*100:p.pnl_pct;x.live=1}return x});
+  const cl=rows.filter(r=>r.status!=="open"),w=cl.filter(r=>r.status==="win").length,l=cl.filter(r=>r.status==="loss").length,o=rows.length-cl.length;
+  const pl=rows.reduce((a,r)=>a+(+r.pnl_eur||0),0),cost=rows.reduce((a,r)=>a+(+r.cost_eur||0),0);
+  const tot=$("tdtot");tot.className="badge "+(rows.length?(pl>=0?"good":"bad"):"neu");
+  tot.innerHTML=`${rows.length} trade${rows.length===1?"":"s"} · ${w}W ${l}L${o?" · "+o+" open":""} · ${money(pl)}${cost?" ("+pct(pl/cost*100)+")":""}`;
+  $("tdsub").textContent=`${dayLab(day,today)} (Europe/Amsterdam) · positions opened that day${o?" · open P&L uses live marks":""} · coin prices in $, P&L in € · click a row for DexScreener`;
+  const SC={win:"good",loss:"bad",flat:"neu",open:"info"};
+  $("tdtb").innerHTML=rows.map(r=>`<tr data-url="https://dexscreener.com/solana/${esc(r.mint)}" title="${esc(r.symbol)} · ${esc(r.src)}${r.partials?" · "+r.partials+" partial TP":""}"><td class="num">${esc(r.t)}</td><td><b>${esc(r.symbol)}</b></td><td><span style="color:${crewOf(String(r.crew).toLowerCase()).color};font-weight:700">${esc(r.crew)}</span> <span class="badge lane ${LANEC[r.lane]||"neu"}">${esc(r.lane)}</span></td><td class="num">${esc(pxf(r.entry_px))}</td><td class="num">${r.status==="open"?'<span class="mut">open</span>':esc(pxf(r.exit_px))+' <span class="mut">'+esc(r.closed_t||"")+'</span>'}</td><td class="num ${+r.pnl_eur>=0?"pos":"neg"}" style="font-weight:700;white-space:nowrap">${money(+r.pnl_eur)} <span class="mut">${r.pnl_pct==null?"":pct(+r.pnl_pct)}</span></td><td><span class="badge ${SC[r.status]||"neu"}">${esc(r.status==="open"?(r.live?"open · live":"open"):r.status)}</span> <span class="mut">${esc(r.exit||"")}</span></td></tr>`).join("")
+   ||`<tr><td colspan="7" class="mut" style="cursor:default">No trades taken on ${esc(dayLab(day,today))}.</td></tr>`}
+$("tdday").onchange=e=>{tdSel=e.target.value;last&&tdRender(last)};
 function render(D){last=D;const b=D.balance,eq=+b.equity_usd,start=+b.start_usd,diff=eq-start,m=eq/start;
   $("ticker").innerHTML=[...(D.ticker||[]),{symbol:"SOL",kind:"mkt",chg_pct:D.market?.sol_24h_pct??0,basis:"24h €"+(+D.market?.sol_usd||0).toFixed(2)}].map(t=>`<span class="tk"><span class="tkc" style="background:${t.kind==="held"?"#F59E0B":"rgba(255,255,255,.22)"}">${esc(String(t.symbol).slice(0,1))}</span><b>${esc(t.symbol)}</b><span class="${t.chg_pct>=0?"pos":"neg"} num">${esc(pct(+t.chg_pct||0))}</span><span class="mut">${esc(t.kind==="held"?"held":t.kind==="mkt"?"market":"watch")} · ${esc(t.basis)}</span></span>`).join("");
   $("eqlab").textContent="Equity · €"+start.toFixed(0)+" paper base";setEq(eq);
@@ -190,11 +213,7 @@ function render(D){last=D;const b=D.balance,eq=+b.equity_usd,start=+b.start_usd,
   $("events").innerHTML=(D.events||[]).slice(0,10).map(e=>{const c=crewOf(e.who);return `<div class="fr"><span class="av" style="background:${c.color};width:28px;height:28px;font-size:12px;border-radius:9px">${esc(c.letter)}</span><div class="grow ell"><b>${esc(e.symbol)}</b> <span class="sub">${esc(e.text)}</span></div><span class="mut num">${esc(e.at)}</span></div>`}).join("")||'<div class="mut">Quiet.</div>';
   const rej=D.rejections_top8||[],rm=Math.max(1,...rej.map(x=>x.count));
   $("rej").innerHTML=rej.map((x,i)=>`<div style="padding:6px 0"><div class="row sb"><span class="ell" style="max-width:78%">${esc(x.label)} <span class="mut">${esc(crewOf(x.reason.split(":")[0]).label)}</span></span>${tw("r"+i,x.count,"int")}</div><div class="bar"><i style="width:${x.count/rm*100}%"></i></div></div>`).join("");tweenAll($("rej"));
-  const st=D.standings||[];let rows;
-  if(standView==="trade")rows=st.map((s,i)=>`<div class="fr"><span class="mut num" style="width:20px">${i+1}</span><div class="grow"><b>${esc(s.symbol)}</b> <span class="mut">${esc(s.source)}${s.open?" · open":""}</span></div><span class="${s.pnl_usd>=0?"pos":"neg"}" style="font-weight:700">${tw("s_"+s.symbol,s.pnl_usd,"money")}</span></div>`);
-  else{const a={};st.forEach(s=>{const k=s.source||"unknown";a[k]=a[k]||{source:k,pnl:0,w:0,l:0,open:0};a[k].pnl+=s.pnl_usd;if(s.open)a[k].open++;else if(s.pnl_usd>0)a[k].w++;else a[k].l++});
-   rows=Object.values(a).sort((x,y)=>y.pnl-x.pnl).map(s=>`<div class="fr"><div class="grow"><b>${esc(s.source)}</b> <span class="mut">${s.w}W ${s.l}L${s.open?" · "+s.open+" open":""}</span></div><span class="${s.pnl>=0?"pos":"neg"}" style="font-weight:700">${tw("ss_"+s.source,s.pnl,"money")}</span></div>`)}
-  $("stand").innerHTML=rows.join("")||'<div class="mut">No trades yet.</div>';tweenAll($("stand"));
+  tdRender(D);
   const A=D.activity||{labels:[],series:{}},names=Object.keys(A.series),L=A.labels.length,tot=A.labels.map((_,i)=>names.reduce((s,n)=>s+(A.series[n][i]||0),0)),tm=Math.max(1,...tot);
   $("actsub").textContent=`per ${A.bucket_min} min`;
   const W=1000,H=200,bw=W/Math.max(1,L);let svg=`<svg viewBox="0 0 ${W} ${H+20}" style="height:200px">`;
