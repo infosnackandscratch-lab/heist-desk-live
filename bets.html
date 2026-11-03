@@ -1,0 +1,79 @@
+<!doctype html><html lang="en"><head><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src https://heist-desk-live-default-rtdb.europe-west1.firebasedatabase.app wss://heist-desk-live-default-rtdb.europe-west1.firebasedatabase.app; base-uri 'none'; form-action 'none'"><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#030605">
+<title>BETS DESK // PAPER</title>
+<style>
+:root{--bg:#030605;--pn:#07100d;--ln:#0f2a22;--g:#00ff9c;--c:#00e5ff;--r:#ff3b5c;--y:#ffd23f;--t:#9fd8c4;--d:#4f7a6d}
+*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--t);font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+body{background-image:linear-gradient(rgba(0,255,156,.04) 1px,transparent 1px),linear-gradient(90deg,rgba(0,255,156,.04) 1px,transparent 1px);background-size:22px 22px;min-height:100vh}
+.wrap{max-width:1180px;margin:0 auto;padding:12px}
+header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px;border-bottom:1px solid var(--ln);padding-bottom:10px}
+h1{margin:0;font-size:20px;letter-spacing:3px;color:var(--g);text-shadow:0 0 8px rgba(0,255,156,.7)}
+h1 span{color:var(--c);text-shadow:0 0 8px rgba(0,229,255,.7)}
+.clk{font-size:12px;color:var(--d);text-align:right}.clk b{color:var(--c);font-weight:normal;text-shadow:0 0 6px rgba(0,229,255,.6)}
+.note{margin:10px 0;padding:7px 10px;border:1px dashed var(--y);color:var(--y);font-size:12px;letter-spacing:1px}
+.panel{background:rgba(7,16,13,.92);border:1px solid var(--ln);border-radius:4px;padding:10px;margin:10px 0;box-shadow:inset 0 0 20px rgba(0,255,156,.03)}
+.ph{display:flex;justify-content:space-between;align-items:center;color:var(--c);font-size:12px;letter-spacing:2px;margin-bottom:8px;border-bottom:1px solid var(--ln);padding-bottom:6px}
+.tot{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.k{font-size:10px;color:var(--d);letter-spacing:1px}.v{font-size:20px;color:var(--g);text-shadow:0 0 10px rgba(0,255,156,.55)}
+.big{font-size:30px}.neg{color:var(--r)!important;text-shadow:0 0 10px rgba(255,59,92,.55)!important}.mut{color:var(--d)!important;text-shadow:none!important}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(330px,1fr));gap:10px}
+.grid .panel{margin:0}
+.led{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;background:#333;vertical-align:middle}
+.led.on{background:var(--g);box-shadow:0 0 8px var(--g);animation:pl 2s infinite}.led.off{background:var(--r);box-shadow:0 0 8px var(--r)}.led.warn{background:var(--y);box-shadow:0 0 8px var(--y)}
+@keyframes pl{50%{opacity:.45}}
+.st{display:grid;grid-template-columns:repeat(3,1fr);gap:6px 8px;margin-bottom:8px}.st .v{font-size:16px}
+table{width:100%;border-collapse:collapse;font-size:11.5px}th{color:var(--d);font-weight:normal;text-align:left;border-bottom:1px solid var(--ln);padding:3px 2px}
+td{padding:3px 2px;border-bottom:1px solid rgba(15,42,34,.5)}td.n,th.n{text-align:right}
+.W{color:var(--g)}.L{color:var(--r)}.O{color:var(--c)}.X{color:var(--d)}
+svg{width:100%;height:190px;display:block}
+.lg{font-size:11px;color:var(--d)}.lg i{display:inline-block;width:10px;height:2px;vertical-align:middle;margin:0 4px 0 10px}
+ul{margin:4px 0 8px;padding-left:16px}li{margin:2px 0}.sub{color:var(--c);font-size:11px;letter-spacing:1px;margin-top:6px}
+.flash{animation:fl .8s}@keyframes fl{0%{background:rgba(0,229,255,.15)}100%{background:transparent}}
+@media(max-width:560px){.tot{grid-template-columns:repeat(2,1fr)}.big{font-size:24px}.grid{grid-template-columns:1fr}h1{font-size:17px}}
+</style></head><body><div class="wrap">
+<header><h1>BETS DESK <span>// PAPER</span></h1><div class="clk"><span class="led" id="ld"></span><b id="now">--:--:--</b> <span id="tz"></span><br>last update <b id="upd">—</b> · <span id="age">connecting…</span></div></header>
+<div class="note">⚠ PAPER ONLY — no wallets, no keys, no real orders. SMALL SAMPLE: results are noise until n≥30 settled bets per bot.</div>
+<div class="panel" id="totp"><div class="ph"><span>▌COMBINED</span><span id="tsub"></span></div>
+<div class="tot"><div><div class="k">TOTAL NET EUR</div><div class="v big" id="tnet">—</div></div><div><div class="k">SETTLED BETS</div><div class="v" id="tbets">—</div></div>
+<div><div class="k">WIN RATE</div><div class="v" id="twr">—</div></div><div><div class="k">OPEN</div><div class="v" id="topen">—</div></div></div>
+<svg id="eq" viewBox="0 0 600 190" preserveAspectRatio="none"></svg>
+<div class="lg"><i style="background:#00ff9c"></i>total<i style="background:#00e5ff"></i>poly 70c<i style="background:#b18cff"></i>poly 95c<i style="background:#ffd23f"></i>kalshi</div></div>
+<div class="grid" id="bots"></div>
+<div class="panel"><div class="ph"><span>▌BANGKOK // ANALYZER</span><span id="bkg"></span></div><div id="bk">—</div></div>
+<div class="lg" style="text-align:center;margin:14px 0">read-only · refresh ~60 s · data: aggregated paper numbers only</div>
+</div><script>
+const DB="https://heist-desk-live-default-rtdb.europe-west1.firebasedatabase.app",TOK=(location.hash.slice(1).match(/^[0-9a-f]{32}$/)||[""])[0],URL_=DB+"/live/"+TOK+"/bets.json";
+const $=id=>document.getElementById(id),esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+let D=null,lastTs=0;
+const eur=x=>x==null?"—":(x>=0?"+":"−")+"€"+Math.abs(x).toFixed(2),cls=x=>x==null?"mut":x<0?"neg":"";
+const hm=t=>{if(!t)return"—";const d=new Date(t*1000);return d.toLocaleTimeString("en-GB",{timeZone:"Europe/Amsterdam",hour:"2-digit",minute:"2-digit"})};
+const dm=t=>{const d=new Date(t*1000);return d.toLocaleDateString("en-GB",{timeZone:"Europe/Amsterdam",day:"2-digit",month:"2-digit"})};
+function chart(eq){const s=$("eq");if(!eq||!eq.length){s.innerHTML='<text x="300" y="100" fill="#4f7a6d" font-size="12" text-anchor="middle" font-family="monospace">no settled bets yet</text>';return}
+ const pts=[[eq[0][0]-60,0,0,0,0]].concat(eq);const W=600,H=190,P=8;let lo=0,hi=0;pts.forEach(p=>{for(let i=1;i<5;i++){lo=Math.min(lo,p[i]);hi=Math.max(hi,p[i])}});if(hi-lo<1){hi+=.5;lo-=.5}
+ const t0=pts[0][0],t1=Math.max(pts[pts.length-1][0],t0+1),X=t=>P+(W-2*P)*(t-t0)/(t1-t0),Y=v=>H-P-(H-2*P)*(v-lo)/(hi-lo);
+ let g="";for(let i=0;i<=4;i++){const y=P+(H-2*P)*i/4;g+=`<line x1="0" x2="${W}" y1="${y}" y2="${y}" stroke="#0f2a22" stroke-width="1"/>`}
+ g+=`<line x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}" stroke="#2a5a4a" stroke-dasharray="4 4"/>`;
+ const col=["","#00ff9c","#00e5ff","#b18cff","#ffd23f"];
+ for(let i=4;i>=1;i--){let d="";pts.forEach((p,j)=>{d+=(j?"L":"M")+X(p[0]).toFixed(1)+","+Y(p[i]).toFixed(1)+(j<pts.length-1?"H"+X(pts[j+1][0]).toFixed(1):"")});
+  g+=`<path d="${d}" fill="none" stroke="${col[i]}" stroke-width="${i==1?2.4:1.2}" opacity="${i==1?1:.75}" ${i==1?'style="filter:drop-shadow(0 0 4px #00ff9c)"':''} vector-effect="non-scaling-stroke"/>`}
+ g+=`<text x="${W-4}" y="14" fill="#4f7a6d" font-size="10" text-anchor="end" font-family="monospace">${eur(hi)}</text><text x="${W-4}" y="${H-4}" fill="#4f7a6d" font-size="10" text-anchor="end" font-family="monospace">${eur(lo)}</text>`;
+ s.innerHTML=g}
+function render(d){const T=d.total;$("tnet").textContent=eur(T.net);$("tnet").className="v big "+cls(T.net);$("tbets").textContent=T.bets;$("twr").textContent=T.bets?(100*T.wins/T.bets).toFixed(1)+"%":"—";
+ $("topen").textContent=T.open;$("tsub").textContent=T.wins+"W / "+(T.bets-T.wins)+"L";chart(d.equity);
+ $("bots").innerHTML=d.bots.map(b=>{const led=b.status==="active"?"on":b.status==="activating"?"warn":"off";
+  const rows=(b.last||[]).map(x=>{const c=x.res==="WIN"?"W":x.res==="LOSS"?"L":/OPEN|RESTING/.test(x.res)?"O":"X";
+   return `<tr><td>${hm(x.t)}</td><td>${esc(x.side)}</td><td class="n">${x.px==null?"—":x.px.toFixed(2)}</td><td class="${c}">${esc(x.res)}</td><td class="n ${x.eur==null?"X":x.eur<0?"L":"W"}">${eur(x.eur)}</td></tr>`}).join("")||'<tr><td colspan="5" class="X">no bets yet</td></tr>';
+  const ex=b.placed!=null?`<div class="lg">orders placed ${b.placed} · filled ${b.filled} · polls ${b.polls??"—"} · errors ${b.errors??"—"}</div>`:"";
+  return `<div class="panel"><div class="ph"><span><span class="led ${led}"></span>${esc(b.name)}</span><span class="${led==="on"?"W":"L"}">${esc(b.status).toUpperCase()}</span></div>
+  <div class="st"><div><div class="k">BETS</div><div class="v">${b.bets}</div></div><div><div class="k">WINS</div><div class="v">${b.wins}</div></div><div><div class="k">WIN RATE</div><div class="v ${b.wr==null?"mut":""}">${b.wr==null?"—":b.wr+"%"}</div></div>
+  <div><div class="k">NET EUR</div><div class="v ${cls(b.net)}">${eur(b.net)}</div></div><div><div class="k">EUR/BET</div><div class="v ${cls(b.per)}">${eur(b.per)}</div></div><div><div class="k">OPEN</div><div class="v O" style="color:var(--c)">${b.open}</div></div></div>${ex}
+  <table><tr><th>TIME</th><th>SIDE</th><th class="n">PRICE</th><th>RESULT</th><th class="n">EUR</th></tr>${rows}</table></div>`}).join("");
+ const B=d.bangkok||{},li=a=>a&&a.length?"<ul>"+a.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":'<ul><li class="X">none</li></ul>';
+ $("bkg").textContent=B.gen?"gen "+B.gen.slice(5,16):"";$("bk").innerHTML=`<div class="sub">MISTAKES / ANOMALIES</div>${li(B.mistakes)}<div class="sub">IMPROVEMENT SUGGESTIONS</div>${li(B.suggestions)}<div class="sub">SERVICE ACTIONS</div>${li(B.actions)}`;
+ $("upd").textContent=d.gen.slice(11);$("tz").textContent="";}
+async function poll(){if(!TOK)return;try{const r=await fetch(URL_,{cache:"no-store"});if(!r.ok)throw r.status;const d=await r.json();if(!d){$("age").textContent="no data yet";return}
+ if(d.ts!==lastTs){lastTs=d.ts;D=d;render(d);$("totp").classList.remove("flash");void $("totp").offsetWidth;$("totp").classList.add("flash")}}catch(e){$("age").textContent=e===401||e===403?"access denied — check link":"fetch error, retrying"}}
+function tick(){$("now").textContent=new Date().toLocaleTimeString("en-GB",{timeZone:"Europe/Amsterdam"});$("tz").textContent="AMS";
+ if(D){const a=Math.round(Date.now()/1000-D.ts);$("age").textContent=a+"s ago";$("ld").className="led "+(a<150?"on":a<600?"warn":"off")}}
+setInterval(tick,1000);tick();if(!TOK){$("age").textContent="missing #token in link"}else{poll();setInterval(()=>{if(!document.hidden)poll()},15000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)poll()})}
+</script></body></html>
