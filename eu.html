@@ -41,6 +41,7 @@ ul{margin:4px 0 8px;padding-left:16px}li{margin:2px 0}.sub{color:var(--c);font-s
 <svg id="eq" viewBox="0 0 600 190" preserveAspectRatio="none"></svg>
 <div class="lg"><i style="background:#00ff9c"></i>balance (EUR)<i style="background:#2a5a4a"></i>€80 start</div></div>
 <div class="grid" id="bots"></div>
+<div class="panel"><div class="ph"><span>▌BANGKOK // ANALYZER (EU BOTS)</span><span id="bkg"></span></div><div id="bk">—</div></div>
 <div class="panel"><div class="ph"><span>▌RECENT BETS (ALL 3)</span><span></span></div><table id="rec"></table></div>
 <div class="lg" style="text-align:center;margin:14px 0">read-only · refresh ~60 s · data: aggregated paper numbers only</div>
 </div><script>
@@ -71,6 +72,8 @@ function render(d){const K=d.bank,T=d.total;$("bal").textContent="€"+K.balance
   <div class="st"><div><div class="k">BETS</div><div class="v">${b.bets}</div></div><div><div class="k">WINS</div><div class="v">${b.wins}</div></div><div><div class="k">WIN RATE</div><div class="v ${b.wr==null?"mut":""}">${b.wr==null?"—":b.wr+"%"}</div></div>
   <div><div class="k">NET EUR</div><div class="v ${cls(b.net)}">${eur(b.net)}</div></div><div><div class="k">EUR/BET</div><div class="v ${cls(b.per)}">${eur(b.per)}</div></div><div><div class="k">OPEN</div><div class="v O" style="color:var(--c)">${b.open}</div></div></div>
   <table><tr><th>TIME</th><th>SIDE</th><th class="n">PRICE</th><th class="n">STAKE</th><th class="n">EDGE</th><th>RESULT</th><th class="n">EUR</th></tr>${rows}</table></div>`}).join("");
+ const B=d.bangkok||{},li=a=>a&&a.length?"<ul>"+a.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":'<ul><li class="X">none</li></ul>';
+ $("bkg").textContent=B.gen?"gen "+B.gen.slice(5,16):"";$("bk").innerHTML=`<div class="sub">BOT SUMMARY (ALL-TIME HISTORY, NOT THE €80 BANK)</div>${li(B.summary)}<div class="sub">MISTAKES / ANOMALIES</div>${li(B.mistakes)}<div class="sub">IMPROVEMENT SUGGESTIONS</div>${li(B.suggestions)}<div class="sub">SERVICE ACTIONS</div>${li(B.actions)}`;
  $("rec").innerHTML='<tr><th>TIME</th><th>BOT</th><th>SIDE</th><th class="n">PRICE</th><th class="n">STAKE</th><th class="n">EDGE</th><th>RESULT</th><th class="n">EUR</th></tr>'+((d.recent||[]).map(x=>row(x,true)).join("")||'<tr><td colspan="8" class="X">no bets yet</td></tr>');
  $("upd").textContent=d.gen.slice(11);}
 async function poll(){if(!TOK)return;try{const r=await fetch(URL_,{cache:"no-store"});if(!r.ok)throw r.status;const d=await r.json();if(!d){$("age").textContent="no data yet";return}
