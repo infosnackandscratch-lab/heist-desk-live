@@ -33,13 +33,13 @@ ul{margin:4px 0 8px;padding-left:16px}li{margin:2px 0}.sub{color:var(--c);font-s
 .tot5{grid-template-columns:repeat(5,1fr)}@media(max-width:560px){.tot5{grid-template-columns:repeat(2,1fr)}}
 </style></head><body><div class="wrap">
 <header><h1>EU DESK <span>// PAPER</span></h1><div class="clk"><span class="led" id="ld"></span><b id="now">--:--:--</b> <span id="tz"></span><br>last update <b id="upd">—</b> · <span id="age">connecting…</span></div></header>
-<div class="note">⚠ PAPER ONLY — no wallets, no keys, no real orders. EU-allowed bots only: Limitless 5m, Limitless 15m, Kalshi BTC 15m. One shared bankroll, start €80.</div>
+<div class="note">⚠ PAPER ONLY — no wallets, no keys, no real orders. EU-allowed bots only: Limitless 5m, Limitless 15m, Kalshi BTC 15m. One shared bankroll, start €80. SMALL SAMPLE: results are noise until n≥30 settled bets per bot.</div>
 <div class="panel" id="totp"><div class="ph"><span>▌SHARED BANK (START €80)</span><span id="tsub"></span></div>
 <div class="tot tot5"><div><div class="k">BALANCE EUR</div><div class="v big" id="bal">—</div></div><div><div class="k">NET P&amp;L</div><div class="v" id="tnet">—</div></div>
 <div><div class="k">SETTLED / WIN RATE</div><div class="v" id="tbets">—</div></div><div><div class="k">OPEN STAKE</div><div class="v" id="topen">—</div></div><div><div class="k">STAKE NOW</div><div class="v" id="stk">—</div></div></div>
 <div class="lg" id="rule" style="margin-top:6px"></div>
 <svg id="eq" viewBox="0 0 600 190" preserveAspectRatio="none"></svg>
-<div class="lg"><i style="background:#00ff9c"></i>balance (EUR)<i style="background:#2a5a4a"></i>€80 start</div></div>
+<div class="lg"><i style="background:#00ff9c"></i>balance (EUR)<i style="background:#00e5ff"></i>lm 5m<i style="background:#b18cff"></i>lm 15m<i style="background:#ff5fa2"></i>kalshi btc15<i style="background:#2a5a4a"></i>€80 start (bot lines = €80 + that bot's P&amp;L)</div></div>
 <div class="grid" id="bots"></div>
 <div class="panel"><div class="ph"><span>▌BANGKOK // ANALYZER (EU BOTS)</span><span id="bkg"></span></div><div id="bk">—</div></div>
 <div class="panel"><div class="ph"><span>▌RECENT BETS (ALL 3)</span><span></span></div><table id="rec"></table></div>
@@ -52,12 +52,13 @@ const eur=x=>x==null?"—":(x>=0?"+":"−")+"€"+Math.abs(x).toFixed(2),e2=x=>x
 const hm=t=>{if(!t)return"—";const d=new Date(t*1000);return d.toLocaleDateString("en-GB",{timeZone:"Europe/Amsterdam",day:"2-digit",month:"2-digit"})+" "+d.toLocaleTimeString("en-GB",{timeZone:"Europe/Amsterdam",hour:"2-digit",minute:"2-digit"})};
 const NM={limitless5:"LM5",limitless15:"LM15",kalshi_btc15:"KB15"};
 function chart(eq,start){const s=$("eq");if(!eq||!eq.length){s.innerHTML='<text x="300" y="100" fill="#4f7a6d" font-size="12" text-anchor="middle" font-family="monospace">no settled bets yet</text>';return}
- const pts=[[eq[0][0]-60,start]].concat(eq);const W=600,H=190,P=8;let lo=start,hi=start;pts.forEach(p=>{lo=Math.min(lo,p[1]);hi=Math.max(hi,p[1])});if(hi-lo<1){hi+=.5;lo-=.5}
+ eq=eq.map(p=>p.length>2?[p[0],p[1],start+p[2],start+p[3],start+p[4]]:[p[0],p[1],start,start,start]);const pts=[[eq[0][0]-60,start,start,start,start]].concat(eq);const W=600,H=190,P=8;let lo=start,hi=start;pts.forEach(p=>{for(let i=1;i<5;i++){lo=Math.min(lo,p[i]);hi=Math.max(hi,p[i])}});if(hi-lo<1){hi+=.5;lo-=.5}
  const t0=pts[0][0],t1=Math.max(pts[pts.length-1][0],t0+1),X=t=>P+(W-2*P)*(t-t0)/(t1-t0),Y=v=>H-P-(H-2*P)*(v-lo)/(hi-lo);
  let g="";for(let i=0;i<=4;i++){const y=P+(H-2*P)*i/4;g+=`<line x1="0" x2="${W}" y1="${y}" y2="${y}" stroke="#0f2a22" stroke-width="1"/>`}
  g+=`<line x1="0" x2="${W}" y1="${Y(start)}" y2="${Y(start)}" stroke="#2a5a4a" stroke-dasharray="4 4"/>`;let d="";
- pts.forEach((p,j)=>{d+=(j?"L":"M")+X(p[0]).toFixed(1)+","+Y(p[1]).toFixed(1)+(j<pts.length-1?"H"+X(pts[j+1][0]).toFixed(1):"")});
- g+=`<path d="${d}" fill="none" stroke="#00ff9c" stroke-width="2.4" style="filter:drop-shadow(0 0 4px #00ff9c)" vector-effect="non-scaling-stroke"/>`;
+ const col=["","#00ff9c","#00e5ff","#b18cff","#ff5fa2"];
+ for(let i=4;i>=1;i--){d="";pts.forEach((p,j)=>{d+=(j?"L":"M")+X(p[0]).toFixed(1)+","+Y(p[i]).toFixed(1)+(j<pts.length-1?"H"+X(pts[j+1][0]).toFixed(1):"")});
+  g+=`<path d="${d}" fill="none" stroke="${col[i]}" stroke-width="${i==1?2.4:1.2}" opacity="${i==1?1:.75}" ${i==1?'style="filter:drop-shadow(0 0 4px #00ff9c)"':''} vector-effect="non-scaling-stroke"/>`}
  g+=`<text x="${W-4}" y="14" fill="#4f7a6d" font-size="10" text-anchor="end" font-family="monospace">€${hi.toFixed(2)}</text><text x="${W-4}" y="${H-4}" fill="#4f7a6d" font-size="10" text-anchor="end" font-family="monospace">€${lo.toFixed(2)}</text>`;
  s.innerHTML=g}
 const row=(x,b)=>{const c=x.res==="WIN"?"W":x.res==="LOSS"?"L":/OPEN/.test(x.res)?"O":"X";
@@ -70,10 +71,10 @@ function render(d){const K=d.bank,T=d.total;$("bal").textContent="€"+K.balance
   const rows=(b.last||[]).map(x=>row(x,false)).join("")||'<tr><td colspan="7" class="X">no bets yet</td></tr>';
   return `<div class="panel"><div class="ph"><span><span class="led ${led}"></span>${esc(b.name)}</span><span class="${led==="on"?"W":"L"}">${esc(b.status).toUpperCase()}</span></div>
   <div class="st"><div><div class="k">BETS</div><div class="v">${b.bets}</div></div><div><div class="k">WINS</div><div class="v">${b.wins}</div></div><div><div class="k">WIN RATE</div><div class="v ${b.wr==null?"mut":""}">${b.wr==null?"—":b.wr+"%"}</div></div>
-  <div><div class="k">NET EUR</div><div class="v ${cls(b.net)}">${eur(b.net)}</div></div><div><div class="k">EUR/BET</div><div class="v ${cls(b.per)}">${eur(b.per)}</div></div><div><div class="k">OPEN</div><div class="v O" style="color:var(--c)">${b.open}</div></div></div>
+  <div><div class="k">NET EUR</div><div class="v ${cls(b.net)}">${eur(b.net)}</div></div><div><div class="k">EUR/BET</div><div class="v ${cls(b.per)}">${eur(b.per)}</div></div><div><div class="k">OPEN</div><div class="v O" style="color:var(--c)">${b.open}</div></div></div>${b.seen!=null?`<div class="lg">windows seen ${b.seen} · missed ${b.missed??"—"}${b.halted?" · HALTED":""}</div>`:""}
   <table><tr><th>TIME</th><th>SIDE</th><th class="n">PRICE</th><th class="n">STAKE</th><th class="n">EDGE</th><th>RESULT</th><th class="n">EUR</th></tr>${rows}</table></div>`}).join("");
  const B=d.bangkok||{},li=a=>a&&a.length?"<ul>"+a.map(x=>"<li>"+esc(x)+"</li>").join("")+"</ul>":'<ul><li class="X">none</li></ul>';
- $("bkg").textContent=B.gen?"gen "+B.gen.slice(5,16):"";$("bk").innerHTML=`<div class="sub">BOT SUMMARY (ALL-TIME HISTORY, NOT THE €80 BANK)</div>${li(B.summary)}<div class="sub">MISTAKES / ANOMALIES</div>${li(B.mistakes)}<div class="sub">IMPROVEMENT SUGGESTIONS</div>${li(B.suggestions)}<div class="sub">SERVICE ACTIONS</div>${li(B.actions)}`;
+ $("bkg").textContent=B.gen?"gen "+B.gen.slice(5,16):"";$("bk").innerHTML=`<div class="sub">BOT SUMMARY (ALL-TIME HISTORY, NOT THE €80 BANK)</div>${li(B.summary)}<div class="sub">MISTAKES / ANOMALIES</div>${li(B.mistakes)}<div class="sub">IMPROVEMENT SUGGESTIONS</div>${li(B.suggestions)}<div class="sub">SERVICE ACTIONS</div>${li(B.actions)}<div class="sub">LEARNER — LOSS REVIEW / REPLAY PROPOSALS (PROPOSE-ONLY, NOTHING AUTO-APPLIED)</div>${li(B.learn)}`;
  $("rec").innerHTML='<tr><th>TIME</th><th>BOT</th><th>SIDE</th><th class="n">PRICE</th><th class="n">STAKE</th><th class="n">EDGE</th><th>RESULT</th><th class="n">EUR</th></tr>'+((d.recent||[]).map(x=>row(x,true)).join("")||'<tr><td colspan="8" class="X">no bets yet</td></tr>');
  $("upd").textContent=d.gen.slice(11);}
 async function poll(){if(!TOK)return;try{const r=await fetch(URL_,{cache:"no-store"});if(!r.ok)throw r.status;const d=await r.json();if(!d){$("age").textContent="no data yet";return}
