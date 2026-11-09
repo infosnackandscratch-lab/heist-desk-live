@@ -37,7 +37,7 @@ ul{margin:4px 0 8px;padding-left:16px}li{margin:2px 0}.sub{color:var(--c);font-s
 <div class="tot"><div><div class="k">TOTAL NET EUR</div><div class="v big" id="tnet">—</div></div><div><div class="k">SETTLED BETS</div><div class="v" id="tbets">—</div></div>
 <div><div class="k">WIN RATE</div><div class="v" id="twr">—</div></div><div><div class="k">OPEN</div><div class="v" id="topen">—</div></div></div>
 <svg id="eq" viewBox="0 0 600 190" preserveAspectRatio="none"></svg>
-<div class="lg"><i style="background:#00ff9c"></i>total<i style="background:#00e5ff"></i>poly 70c<i style="background:#b18cff"></i>poly 95c<i style="background:#ffd23f"></i>kalshi wx<i style="background:#ff5fa2"></i>kalshi btc15</div></div>
+<div class="lg"><i style="background:#00ff9c"></i>total<i style="background:#00e5ff"></i>poly 70c<i style="background:#b18cff"></i>poly 95c<i style="background:#ff5fa2"></i>kalshi btc15</div></div>
 <div class="grid" id="bots"></div>
 <div class="panel"><div class="ph"><span>▌BANGKOK // ANALYZER</span><span id="bkg"></span></div><div id="bk">—</div></div>
 <div class="lg" style="text-align:center;margin:14px 0">read-only · refresh ~60 s · data: aggregated paper numbers only</div>
@@ -54,7 +54,7 @@ function chart(eq){const s=$("eq");if(!eq||!eq.length){s.innerHTML='<text x="300
  let g="";for(let i=0;i<=4;i++){const y=P+(H-2*P)*i/4;g+=`<line x1="0" x2="${W}" y1="${y}" y2="${y}" stroke="#0f2a22" stroke-width="1"/>`}
  g+=`<line x1="0" x2="${W}" y1="${Y(0)}" y2="${Y(0)}" stroke="#2a5a4a" stroke-dasharray="4 4"/>`;
  const col=["","#00ff9c","#00e5ff","#b18cff","#ffd23f","#ff5fa2"];
- for(let i=5;i>=1;i--){let d="";pts.forEach((p,j)=>{d+=(j?"L":"M")+X(p[0]).toFixed(1)+","+Y(p[i]).toFixed(1)+(j<pts.length-1?"H"+X(pts[j+1][0]).toFixed(1):"")});
+ for(let i=5;i>=1;i--){if(i==4)continue;let d="";pts.forEach((p,j)=>{d+=(j?"L":"M")+X(p[0]).toFixed(1)+","+Y(p[i]).toFixed(1)+(j<pts.length-1?"H"+X(pts[j+1][0]).toFixed(1):"")});
   g+=`<path d="${d}" fill="none" stroke="${col[i]}" stroke-width="${i==1?2.4:1.2}" opacity="${i==1?1:.75}" ${i==1?'style="filter:drop-shadow(0 0 4px #00ff9c)"':''} vector-effect="non-scaling-stroke"/>`}
  g+=`<text x="${W-4}" y="14" fill="#4f7a6d" font-size="10" text-anchor="end" font-family="monospace">${eur(hi)}</text><text x="${W-4}" y="${H-4}" fill="#4f7a6d" font-size="10" text-anchor="end" font-family="monospace">${eur(lo)}</text>`;
  s.innerHTML=g}
